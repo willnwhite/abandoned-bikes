@@ -1,0 +1,68 @@
+<canvas id="output" width="3264" height="2448"></canvas>
+<p>new</p>
+<canvas id="new" width="3264" height="2448"></canvas>
+<p>old</p>
+<canvas id="old" width="3264" height="2448"></canvas>
+<script charset="utf-8">
+const width = 3264,
+  height = 2448;
+const fill_in = 128;
+const tolerance = 50;
+// set up old canvas
+
+const old_ctx = document.getElementById("old").getContext("2d");
+
+const old = new Image();
+
+old.onload = () => {
+  old_ctx.drawImage(old, 0, 0);
+  const old_imgData = old_ctx.getImageData(0, 0, width, height);
+
+  // set up new canvas
+
+  const new_ctx = document.getElementById("new").getContext("2d");
+
+  const new_ = new Image();
+
+  // (make old and new canvases invisible) (can be set off-screen)
+
+  new_.onload = () => {
+    new_ctx.drawImage(new_, 0, 0);
+    const new_imgData = new_ctx.getImageData(0, 0, width, height);
+
+    // set up output canvas
+    const output_ctx = document.getElementById("output").getContext("2d");
+    console.log(new_imgData.data.length);
+
+    // [r,g,b,a,r,g,b,a] -> [{r}]
+    // for (let i = 0; i < array.length; i +=1) {
+    //
+    // }
+    const red_average = old_imgData.data.reduce;
+
+    // render to output canvas
+    output_ctx.putImageData(
+      new ImageData(
+        old_imgData.data.map((pixel, index) => {
+          const diff = Math.abs(pixel - new_imgData.data[index]);
+
+          if (diff <= tolerance) {
+            // maybe TODO, let user change this
+            return pixel;
+          } else {
+            return fill_in; // TODO let user change this
+          }
+        }),
+        width,
+        height
+      ),
+      0,
+      0
+    );
+  };
+
+  new_.src = "IMG_0382.JPG";
+};
+
+old.src = "IMG_0385.JPG";
+</script>
