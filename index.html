@@ -1,68 +1,132 @@
-<canvas id="output" width="3264" height="2448"></canvas>
-<p>new</p>
-<canvas id="new" width="3264" height="2448"></canvas>
-<p>old</p>
-<canvas id="old" width="3264" height="2448"></canvas>
+<label>tolerance<input type="range" id="tolerance" min="0" max="255"></label>
+<label>fill in<input type="range" id="fill_in" min="0" max="255"></label>
+<canvas id="output"></canvas>
+<form>
+  <label>old<input type="file" id="old"></label>
+  <label>new<input type="file" id="new"></label>
+</form>
+<!-- When you upload new file (both files), show the output image. Until then, don't show any image. -->
+
 <script charset="utf-8">
-const width = 3264,
-  height = 2448;
-const fill_in = 128;
-const tolerance = 50;
-// set up old canvas
+const log = thing => {
+  console.log(thing);
+  return thing;
+};
 
-const old_ctx = document.getElementById("old").getContext("2d");
+let tolerance = 50;
+let fill_in = 128; // TODO get the right colour, so the user doesn't have to set it
 
-const old = new Image();
+document.getElementById("tolerance").addEventListener("change", event => {
+  render(fill_in, event.target.value);
+});
+document.getElementById("fill_in").addEventListener("change", event => {
+  render(event.target.value, tolerance);
+});
 
-old.onload = () => {
-  old_ctx.drawImage(old, 0, 0);
-  const old_imgData = old_ctx.getImageData(0, 0, width, height);
+// set up output canvas
+const output_canvas = document.getElementById("output");
+const output_ctx = output_canvas.getContext("2d");
 
+let old_imgData, new_imgData;
+
+let width, height;
+
+document.getElementById("old").addEventListener("change", event => {
+  const old_image = new Image();
+
+  old_image.onload = () => {
+    // set up old canvas
+
+    const old_canvas = document.createElement("canvas");
+
+    // set canvas dimensions to file
+    old_canvas.height = old_image.height;
+    old_canvas.width = old_image.width;
+
+    height = old_image.height;
+    width = old_image.width;
+
+    const old_ctx = old_canvas.getContext("2d");
+
+    old_ctx.drawImage(
+      old_image,
+      0,
+      0,
+      old_image.width,
+      old_image.height,
+      0,
+      0,
+      old_canvas.width / 4,
+      old_canvas.height / 4
+    );
+
+    old_imgData = old_ctx.getImageData(0, 0, width, height);
+  };
+  old_image.src = event.target.files[0].name;
+});
+
+// handle new file input
+document.getElementById("new").addEventListener("change", event => {
   // set up new canvas
+  const new_image = new Image();
+  const new_canvas = document.createElement("canvas");
 
-  const new_ctx = document.getElementById("new").getContext("2d");
-
-  const new_ = new Image();
+  const new_ctx = new_canvas.getContext("2d");
 
   // (make old and new canvases invisible) (can be set off-screen)
 
-  new_.onload = () => {
-    new_ctx.drawImage(new_, 0, 0);
-    const new_imgData = new_ctx.getImageData(0, 0, width, height);
+  new_image.onload = () => {
+    // set canvas dimensions to file
+    new_canvas.height = new_image.height;
+    new_canvas.width = new_image.width;
 
-    // set up output canvas
-    const output_ctx = document.getElementById("output").getContext("2d");
-    console.log(new_imgData.data.length);
+    // set output canvas size now you know image size
+    output_canvas.height = new_image.height / 4;
+    output_canvas.width = new_image.width / 4;
+
+    new_ctx.drawImage(
+      new_image,
+      0,
+      0,
+      new_image.width,
+      new_image.height,
+      0,
+      0,
+      new_canvas.width / 4,
+      new_canvas.height / 4
+    );
+    new_imgData = new_ctx.getImageData(0, 0, width, height);
+
+    render(fill_in, tolerance);
 
     // [r,g,b,a,r,g,b,a] -> [{r}]
     // for (let i = 0; i < array.length; i +=1) {
     //
     // }
-    const red_average = old_imgData.data.reduce;
-
-    // render to output canvas
-    output_ctx.putImageData(
-      new ImageData(
-        old_imgData.data.map((pixel, index) => {
-          const diff = Math.abs(pixel - new_imgData.data[index]);
-
-          if (diff <= tolerance) {
-            // maybe TODO, let user change this
-            return pixel;
-          } else {
-            return fill_in; // TODO let user change this
-          }
-        }),
-        width,
-        height
-      ),
-      0,
-      0
-    );
+    // const red_average = old_imgData.data.reduce;
   };
+  new_image.src = event.target.files[0].name;
+});
 
-  new_.src = "IMG_0382.JPG";
+// render to output canvas
+const render = (fill_in, tolerance) => {
+  output_ctx.putImageData(
+    new ImageData(
+      old_imgData.data.map((pixel, index) => {
+        const diff = Math.abs(pixel - new_imgData.data[index]);
+
+        if (diff <= tolerance) {
+          // maybe TODO, let user change this
+          return pixel;
+        } else {
+          return fill_in; // TODO let user change this
+        }
+      }),
+      width,
+      height
+    ),
+    0,
+    0
+  );
 };
-
-old.src = "IMG_0385.JPG";
 </script>
